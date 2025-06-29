@@ -1,0 +1,236 @@
+package require tcltest
+namespace import ::tcltest::*
+interp alias {} @ {} lindex
+interp alias {} = {} expr
+package require extexpr
+
+### List operations tests
+# test maxlProcTest-1 {} -setup {
+#     set y [list 0 1 4 9 16 25 36 49 64 81 100]
+# } -body {
+#     return [= {maxl($y)}]
+# } -result 100 -cleanup {
+#     unset y
+# }
+
+# test minlProcTest-1 {} -setup {
+#     set y [list 0 1 4 9 16 25 36 49 64 81 100]
+# } -body {
+#     return [= {minl($y)}]
+# } -result 0 -cleanup {
+#     unset y
+# }
+### List-scalar operations tests
+test mullscProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    return [= {mullsc($y,2)}]
+} -result {0.0 2.0 8.0 18.0 32.0 50.0 72.0 98.0 128.0 162.0 200.0} -cleanup {
+    unset y
+}
+test mullscProcTest-2 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    catch {= {mullsc($y)}} errorStr
+    return $errorStr
+} -result {wrong # args: should be "tcl::mathfunc::mullsc list scalar"} -cleanup {
+    unset y errorStr
+}
+test mullscProcTest-3 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    catch {= {mullsc($y,2,3)}} errorStr
+    return $errorStr
+} -result {wrong # args: should be "tcl::mathfunc::mullsc list scalar"} -cleanup {
+    unset y errorStr
+}
+test mullscProcTest-4 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    catch {= {mullsc($y,{a})}} errorStr
+    return $errorStr
+} -result {expected floating-point number but got "a"} -cleanup {
+    unset y errorStr
+}
+test mullscProcTest-5 {} -setup {
+    set y [list 0 1 4 v 16 25 36 49 64 81 100]
+} -body {
+    catch {= {mullsc($y,2)}} errorStr
+    return $errorStr
+} -result {expected floating-point number but got "v"} -cleanup {
+    unset y
+}
+test sumlscProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    return [= {sumlsc($y,2)}]
+} -result {2.0 3.0 6.0 11.0 18.0 27.0 38.0 51.0 66.0 83.0 102.0} -cleanup {
+    unset y
+}
+test sublscProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    return [= {sublsc($y,2)}]
+} -result {-2.0 -1.0 2.0 7.0 14.0 23.0 34.0 47.0 62.0 79.0 98.0} -cleanup {
+    unset y
+}
+test powlscProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    return [= {powlsc($y,0.5)}]
+} -result {0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0} -cleanup {
+    unset y
+}
+test powlscProcTest-2 {} -setup {
+    set y [list 0 1 4 -9 16 25 36 49 64 81 100]
+} -body {
+    catch {= {powlsc($y,0.5)}} errorStr
+    return $errorStr
+} -result {Negative base cannot be raised to a non-integer power} -cleanup {
+    unset y errorStr
+}
+test divlscProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    return [= {divlsc($y,2)}]
+} -result {0.0 0.5 2.0 4.5 8.0 12.5 18.0 24.5 32.0 40.5 50.0} -cleanup {
+    unset y
+}
+test divlscProcTest-2 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    catch {= {divlsc($y,0)}} errorStr
+    return $errorStr
+} -result {Division by zero} -cleanup {
+    unset y errorStr
+}
+test divlscProcTest-3 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    catch {= {divlsc($y,0.0)}} errorStr
+    return $errorStr
+} -result {Division by zero} -cleanup {
+    unset y
+}
+
+### List-list operations tests
+test mulllProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    return [= {mulll($y,$y)}]
+} -result {0.0 1.0 16.0 81.0 256.0 625.0 1296.0 2401.0 4096.0 6561.0 10000.0} -cleanup {
+    unset y
+}
+test mulllProcTest-2 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+    set y1 [list 0 1 4 9 16 25 36 49 64 81]
+} -body {
+    catch {= {mulll($y,$y1)}} errorStr
+    return $errorStr
+} -result {Lengths of the input lists '11' and '10' are not equal} -cleanup {
+    unset y y1
+}
+test sumllProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    return [= {sumll($y,$y)}]
+} -result {0.0 2.0 8.0 18.0 32.0 50.0 72.0 98.0 128.0 162.0 200.0} -cleanup {
+    unset y
+}
+test subllProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+} -body {
+    return [= {subll($y,$y)}]
+} -result {0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0} -cleanup {
+    unset y
+}
+test divllProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+    set y1 [list 4 1 40 19 439 22 1000 24 56 78 3]
+} -body {
+    return [= {divll($y,$y1)}]
+} -result {0.0 1.0 0.1 0.47368421052631576 0.03644646924829157 1.1363636363636365 0.036 2.0416666666666665\
+1.1428571428571428 1.0384615384615385 33.333333333333336} -cleanup {
+    unset y y1
+}
+test divllProcTest-2 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+    set y1 [list 4 1 40 19 439 22 0 24 56 78 3]
+} -body {
+    catch {= {divll($y,$y1)}} errorStr
+    return $errorStr
+} -result {Division by zero} -cleanup {
+    unset y y1 errorStr
+}
+test powllProcTest-1 {} -setup {
+    set y [list 0 1 4 9 16 25 36 49 64 81 100]
+    set y1 [list 1 2 1 2 1 2 1 2 1 2 1]
+} -body {
+    return [= {powll($y,$y1)}]
+} -result {0.0 1.0 4.0 81.0 16.0 625.0 36.0 2401.0 64.0 6561.0 100.0} -cleanup {
+    unset y y1
+}
+test powllProcTest-2 {} -setup {
+    set y [list 0 1 4 -9 16 25 36 49 64 81 100]
+    set y1 [list 1 2 1 0.5 1 2 1 2 1 2 1]
+} -body {
+    catch {= {powll($y,$y1)}} errorStr
+    return $errorStr
+} -result {Negative base cannot be raised to a non-integer power} -cleanup {
+    unset y y1 errorStr
+}
+
+### List commands test
+# test lindexProcTest-1 {} -setup {
+#     set y [list 0 1 4 9 16 25 36 49 64 81 100]
+# } -body {
+#     return [= {lindex($y,2)}]
+# } -result 4 -cleanup {
+#     unset y
+# }
+
+# test lrangeProcTest-1 {} -setup {
+#     set y [list 0 1 4 9 16 25 36 49 64 81 100]
+# } -body {
+#     return [= {lrange($y,2,6)}]
+# } -result {4 9 16 25 36} -cleanup {
+#     unset y
+# }
+
+# test llengthProcTest-1 {} -setup {
+#     set y [list 0 1 4 9 16 25 36 49 64 81 100]
+# } -body {
+#     return [= {llength($y)}]
+# } -result 11 -cleanup {
+#     unset y
+# }
+### Math functions tests
+# test logbProcTest-1 {} -body {
+#     return [= {logb(16,2)}]
+# } -result 4.0
+
+# test logbProcTest-2 {} -body {
+#     return [= {logb(16,3)}]
+# } -result 2.5237190142858297
+
+# test logbProcTest-3 {} -body {
+#     return [= {logb(0,3)}]
+# } -result -Inf
+
+### Boolean functions tests
+# test booleanTest-1 {} -body {
+#     return [= {exactone(true,true,true,true,true,true)}]
+# } -result false
+
+# test booleanTest-2 {} -body {
+#     return [= {exactone(false,false,true,false,false,false)}]
+# } -result true
+
+# test booleanTest-3 {} -body {
+#     return [= {exactone(false,false,true,false,false,true)}]
+# } -result false
+
+# test booleanTest-4 {} -body {
+#     return [= {exactone(false,false,false,false,false,false)}]
+# } -result false
+cleanupTests
