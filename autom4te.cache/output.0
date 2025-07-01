@@ -5441,7 +5441,7 @@ printf "%s\n" "$ac_cv_c_bigendian" >&6; }
     
 
 
-    vars=""
+    vars="extexpr.tcl"
     for i in $vars; do
 	# check for existence, be strict because it is installed
 	if test ! -f "${srcdir}/$i" ; then
