@@ -1,0 +1,166 @@
+.PP
+The \fB\fCextexpr\fR package extends built\-in commands used in \fB\fC[expr]\fR command.
+.SH Installation
+.PP
+To install, run 
+\fB\fCbash
+\&./configure
+sudo make install
+\fR
+If you have different versions of Tcl on the same machine, you can set the path to this version with \fB\fC\-with\-tcl=path\fR
+flag to configure script.
+.PP
+On Windows you can use MSYS64 UCRT64 environment \[la]https://www.msys2.org/\[ra], the above steps are identical if you run it
+from UCRT64 shell. After installing the package, you can move extexpr package folder (usually located in
+\fB\fCC:\\msys64\\ucrt64\\lib\\\fR) to path listed in \fB\fCauto_path\fR variable of your local Tcl installation.
+.SH Supported platforms
+.PP
+Any OS that has tcl8.6/tcl9.0 (Linux, Windows, FreeBSD).
+.SH Description
+.SS Vector/scalar operations
+.PP
+The first block of functions implements vector\-vector, vector\-scalar, scalar\-vector and scalar\-scalar operations.
+Vectors are represented by lists in Tcl, and scalars \- by single numbers.
+They are implemented with the same functions of two arguments: \fB\fCsum()\fR, \fB\fCsub()\fR, \fB\fCmul()\fR, \fB\fCdiv()\fR and \fB\fCpow()\fR\&.
+The result depends on the size of operands, according to this table:
+.TS
+allbox;
+cb cb cb cb cb
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+l l l l l
+.
+Function	1st argument	2nd argument	Result	Equation
+\fB\fCsum()\fR	scalar	scalar	scalar	\fB\fCa+b\fR
+	vector	scalar	vector	\fB\fC[a0+b, a1+b, a2+b, ..., aN+b]\fR
+	scalar	vector	vector	\fB\fC[a+b0, a+b1, a+b2, ..., a+bN]\fR
+	vector	vector	vector	\fB\fC[a0+b0, a1+b1, a2+b2, ..., aN+bN]\fR
+\fB\fCsub()\fR	scalar	scalar	scalar	\fB\fCa\-b\fR
+	vector	scalar	vector	\fB\fC[a0\-b, a1\-b, a2\-b, ..., aN\-b]\fR
+	scalar	vector	vector	\fB\fC[a\-b0, a\-b1, a\-b2, ..., a\-bN]\fR
+	vector	vector	vector	\fB\fC[a0\-b0, a1\-b1, a2\-b2, ..., aN\-bN]\fR
+\fB\fCmul()\fR	scalar	scalar	scalar	\fB\fCa*b\fR
+	vector	scalar	vector	\fB\fC[a0*b, a1*b, a2*b, ..., aN*b]\fR
+	scalar	vector	vector	\fB\fC[a*b0, a*b1, a*b2, ..., a*bN]\fR
+	vector	vector	vector	\fB\fC[a0*b0, a1*b1, a2*b2, ..., aN*bN]\fR
+\fB\fCdiv()\fR	scalar	scalar	scalar	\fB\fCa/b\fR
+	vector	scalar	vector	\fB\fC[a0/b, a1/b, a2/b, ..., aN/b]\fR
+	scalar	vector	vector	\fB\fC[a/b0, a/b1, a/b2, ..., a/bN]\fR
+	vector	vector	vector	\fB\fC[a0/b0, a1/b1, a2/b2, ..., aN/bN]\fR
+\fB\fCpow()\fR	scalar	scalar	scalar	\fB\fCa^b\fR
+	vector	scalar	vector	\fB\fC[a0^b, a1^b, a2^b, ..., aN^b]\fR
+	scalar	vector	vector	\fB\fC[a^b0, a^b1, a^b2, ..., a^bN]\fR
+	vector	vector	vector	\fB\fC[a0^b0, a1^b1, a2^b2, ..., aN^bN]\fR
+.TE
+.PP
+Consider the examples, first is sum of two vectors:
+.PP
+.RS
+.nf
+package require extexpr
+interp alias {} = {} expr
+
+set a {1 2 3 4 5 6}
+set b {9 8 7 6 5 4}
+set y [= {sum($a,$b)}]
+.fi
+.RE
+.PP
+.RS
+.nf
+==> 10.0 10.0 10.0 10.0 10.0 10.0
+.fi
+.RE
+.PP
+Power of vector:
+.PP
+.RS
+.nf
+set y [= {pow($a,2)}]
+.fi
+.RE
+.PP
+.RS
+.nf
+==> 1.0 4.0 9.0 16.0 25.0 36.0
+.fi
+.RE
+.PP
+Power of scalar:
+.PP
+.RS
+.nf
+set y [= {pow(2,$a)}]
+.fi
+.RE
+.PP
+.RS
+.nf
+==> 2.0 4.0 8.0 16.0 32.0 64.0
+.fi
+.RE
+.PP
+These 5 functions implemented in C code for efficiency.
+.SS Aliases for Tcl list commands
+.PP
+Package add aliases for \fB\fClindex\fR, \fB\fCllength\fR and \fB\fClrange\fR and ability to use it in \fB\fC[expr]\fR as a function:
+.RS
+.IP \(bu 2
+\fB\fClindex list ?index ...?\fR \-> \fB\fClindex(list,index,...)\fR or \fB\fCli(list,index,...)\fR
+.IP \(bu 2
+\fB\fCllength list\fR \-> \fB\fCllength(list)\fR or \fB\fCll(list)\fR
+.IP \(bu 2
+\fB\fClrange list first last\fR \-> \fB\fClrange(list,first,last)\fR or \fB\fClr(list,first,last)\fR
+.RE
+.PP
+Also, commands \fB\fC::tcl::mathfunc::max\fR and \fB\fC::tcl::mathfunc::min\fR now have \fB\fC::tcl::mathfunc::maxl\fR and 
+\fB\fC::tcl::mathfunc::minl\fR versions that accepts lists instead of many arguments:
+.PP
+.RS
+.nf
+set numbers {86 982 81 64 1 0.1}
+set max [= {maxl($numbers)}]
+.fi
+.RE
+.PP
+.RS
+.nf
+==> 982
+.fi
+.RE
+.PP
+.RS
+.nf
+set min [= {minl($numbers)}]
+.fi
+.RE
+.PP
+.RS
+.nf
+==> 0.1
+.fi
+.RE
+.SS New commands
+.PP
+Some new command was added:
+.RS
+.IP \(bu 2
+\fB\fCtcl::mathfunc::logb value base\fR \- logarithm with arbitary base 
+.RE
