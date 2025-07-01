@@ -1,3 +1,4 @@
+.TH extexpr
 .PP
 The \fB\fCextexpr\fR package extends built\-in commands used in \fB\fC[expr]\fR command.
 .SH Installation
