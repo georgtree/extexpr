@@ -12,50 +12,15 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-#========================================================================
-# Add additional lines to handle any additional AC_SUBST cases that
-# have been added in a customized configure script.
-#========================================================================
-
-#SAMPLE_NEW_VAR	= @SAMPLE_NEW_VAR@
-
-#========================================================================
-# Nothing of the variables below this line should need to be changed.
-# Please check the TARGETS section below to make sure the make targets
-# are correct.
-#========================================================================
-
-#========================================================================
-# The names of the source files is defined in the configure script.
-# The object files are used for linking into the final library.
-# This will be used when a dist target is added to the Makefile.
-# It is not important to specify the directory, as long as it is the
-# $(srcdir) or in the generic, win or unix subdirectory.
-#========================================================================
-
 PKG_SOURCES	= @PKG_SOURCES@
 PKG_OBJECTS	= @PKG_OBJECTS@
 
 PKG_STUB_SOURCES = @PKG_STUB_SOURCES@
 PKG_STUB_OBJECTS = @PKG_STUB_OBJECTS@
 
-#========================================================================
-# PKG_TCL_SOURCES identifies Tcl runtime files that are associated with
-# this package that need to be installed, if any.
-#========================================================================
-
 PKG_TCL_SOURCES = @PKG_TCL_SOURCES@
 
-#========================================================================
-# This is a list of public header files to be installed, if any.
-#========================================================================
-
 PKG_HEADERS	= @PKG_HEADERS@
-
-#========================================================================
-# "PKG_LIB_FILE" refers to the library (dynamic or static as per
-# configuration options) composed of the named objects.
-#========================================================================
 
 PKG_LIB_FILE	= @PKG_LIB_FILE@
 PKG_LIB_FILE8	= @PKG_LIB_FILE8@
@@ -121,12 +86,6 @@ TCL_SRC_DIR	= @TCL_SRC_DIR@
 # Not used, but retained for reference of what libs Tcl required
 #TCL_LIBS	= @TCL_LIBS@
 
-#========================================================================
-# TCLLIBPATH seeds the auto_path in Tcl's init.tcl so we can test our
-# package without installing.  The other environment variables allow us
-# to test against an uninstalled Tcl.  Add special env vars that you
-# require for testing here (like TCLX_LIBRARY).
-#========================================================================
 
 EXTRA_PATH	= $(top_builddir):$(TCL_BIN_DIR)
 #EXTRA_PATH	= $(top_builddir):$(TCL_BIN_DIR):$(TK_BIN_DIR)
@@ -178,48 +137,33 @@ VALGRINDARGS	= --tool=memcheck --num-callers=8 --leak-resolution=high \
 
 .SUFFIXES: .c .$(OBJEXT)
 
-#========================================================================
-# Start of user-definable TARGETS section
-#========================================================================
 
 #========================================================================
-# TEA TARGETS.  Please note that the "libraries:" target refers to platform
-# independent files, and the "binaries:" target includes executable programs and
-# platform-dependent libraries.  Modify these targets so that they install
-# the various pieces of your package.  The make and install rules
-# for the BINARIES that you specified above have already been done.
+# Top recipes
 #========================================================================
-
 all: binaries libraries
-
-#========================================================================
-# The binaries target builds executable programs, Windows .dll's, unix
-# shared/static libraries, and any other platform-dependent files.
-# The list of targets to build for "binaries:" is specified at the top
-# of the Makefile, in the "BINARIES" variable.
-#========================================================================
 
 binaries: $(BINARIES)
 
 libraries:
 
-#========================================================================
-# Your doc target should differentiate from doc builds (by the developer)
-# and doc installs (see install-doc), which just install the docs on the
-# end user machine when building from source.
-#========================================================================
+shell: binaries libraries
+	@$(TCLSH) $(SCRIPT)
 
-doc:
-	$(TCLSH) $(srcdir)/docs/doc_gen.tcl
+#========================================================================
+# Test recipes
+#========================================================================
+test: binaries libraries
+	$(TCLSH) `@CYGPATH@ $(srcdir)/test/all.tcl` $(TESTFLAGS) \
+	    -load "package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) \
+		[list load `@CYGPATH@ $(PKG_LIB_FILE)` [string totitle $(PACKAGE_NAME)]]"
 
+#========================================================================
+# Package installing recipes
+#========================================================================
 install: all install-binaries install-libraries install-doc
 
 install-binaries: binaries install-lib-binaries install-bin-binaries
-
-#========================================================================
-# This rule installs platform-independent files, such as header files.
-# The list=...; for p in $$list handles the empty list case x-platform.
-#========================================================================
 
 install-libraries: libraries
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(includedir)"
@@ -229,11 +173,6 @@ install-libraries: libraries
 	    $(INSTALL_DATA) $(srcdir)/$$i "$(DESTDIR)$(includedir)" ; \
 	done;
 
-#========================================================================
-# Install documentation.  Unix manpages should go in the $(mandir)
-# directory.
-#========================================================================
-
 install-doc:
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(mandir)/mann"
 	@echo "Installing documentation in $(DESTDIR)$(mandir)"
@@ -242,14 +181,9 @@ install-doc:
 	    $(INSTALL_DATA) $$i "$(DESTDIR)$(mandir)/mann" ; \
 	done
 
-test: binaries libraries
-	$(TCLSH) `@CYGPATH@ $(srcdir)/test/all.tcl` $(TESTFLAGS) \
-	    -load "package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) \
-		[list load `@CYGPATH@ $(PKG_LIB_FILE)` [string totitle $(PACKAGE_NAME)]]"
-
-shell: binaries libraries
-	@$(TCLSH) $(SCRIPT)
-
+#========================================================================
+# Debugging recipes
+#========================================================================
 gdb:
 	$(TCLSH_ENV) $(PKG_ENV) $(GDB) $(TCLSH_PROG) $(SCRIPT)
 
@@ -267,17 +201,16 @@ valgrind: binaries libraries
 valgrindshell: binaries libraries
 	$(TCLSH_ENV) $(PKG_ENV) $(VALGRIND) $(VALGRINDARGS) $(TCLSH_PROG) $(SCRIPT)
 
-depend:
+#========================================================================
+# Doc generating recipes
+#========================================================================
+doc:
+	$(TCLSH) $(srcdir)/docs/doc_gen.tcl
 
 #========================================================================
-# $(PKG_LIB_FILE) should be listed as part of the BINARIES variable
-# mentioned above.  That will ensure that this target is built when you
-# run "make binaries".
-#
-# The $(PKG_OBJECTS) objects are created and linked into the final
-# library.  In most cases these object files will correspond to the
-# source files above.
+# Building recipes
 #========================================================================
+depend:
 
 $(PKG_LIB_FILE): $(PKG_OBJECTS)
 	-rm -f $(PKG_LIB_FILE)
@@ -289,45 +222,14 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 	${MAKE_STUB_LIB}
 	$(RANLIB_STUB) $(PKG_STUB_LIB_FILE)
 
-#========================================================================
-# We need to enumerate the list of .c to .o lines here.
-#
-# In the following lines, $(srcdir) refers to the toplevel directory
-# containing your extension.  If your sources are in a subdirectory,
-# you will have to modify the paths to reflect this:
-#
-# sample.$(OBJEXT): $(srcdir)/generic/sample.c
-#	$(COMPILE) -c `@CYGPATH@ $(srcdir)/generic/sample.c` -o $@
-#
-# Setting the VPATH variable to a list of paths will cause the makefile
-# to look into these paths when resolving .c to .obj dependencies.
-# As necessary, add $(srcdir):$(srcdir)/compat:....
-#========================================================================
-
 VPATH = $(srcdir):$(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win:$(srcdir)/macosx
 
 .c.@OBJEXT@:
 	$(COMPILE) -c `@CYGPATH@ $<` -o $@
 
-tclsample.@OBJEXT@:	sampleUuid.h
-
-$(srcdir)/manifest.uuid:
-	printf "git-" >$(srcdir)/manifest.uuid
-	(cd $(srcdir); git rev-parse HEAD >>$(srcdir)/manifest.uuid || \
-	    (printf "svn-r" >$(srcdir)/manifest.uuid ; \
-	    svn info --show-item last-changed-revision >>$(srcdir)/manifest.uuid) || \
-	    printf "unknown" >$(srcdir)/manifest.uuid)
-
-sampleUuid.h:	$(srcdir)/manifest.uuid
-	echo "#define SAMPLE_VERSION_UUID \\" >$@
-	cat $(srcdir)/manifest.uuid >>$@
-	echo "" >>$@
-
 #========================================================================
 # Distribution creation
-# You may need to tweak this target to make it work correctly.
 #========================================================================
-
 #COMPRESS	= tar cvf $(PKG_DIR).tar $(PKG_DIR); compress $(PKG_DIR).tar
 COMPRESS	= tar zcvf $(PKG_DIR).tar.gz $(PKG_DIR)
 COMPRESS_ZIP= zip -r $(PKG_DIR).zip $(PKG_DIR)
@@ -343,7 +245,7 @@ dist-clean:
 
 dist: dist-clean
 	mkdir -p $(DIST_DIR)
-	cp -p $(srcdir)/README* $(DIST_DIR)/
+	cp -p $(srcdir)/README.md $(DIST_DIR)/
 	cp -p $(srcdir)/LICENSE* $(DIST_DIR)/
 	cp -p $(srcdir)/pkgIndex.tcl $(DIST_DIR)/
 	cp -p $(srcdir)/$(PKG_LIB_FILE) $(DIST_DIR)/
@@ -359,14 +261,8 @@ dist: dist-clean
 	(cd $(DIST_ROOT); $(COMPRESS); $(COMPRESS_ZIP))
 
 #========================================================================
-# End of user-definable section
+# Cleaning of building files
 #========================================================================
-
-#========================================================================
-# Don't modify the file to clean here.  Instead, set the "CLEANFILES"
-# variable in configure.ac
-#========================================================================
-
 clean:
 	-test -z "$(BINARIES)" || rm -f $(BINARIES)
 	-rm -f *.$(OBJEXT) core *.core
@@ -378,16 +274,8 @@ distclean: clean
 	-rm -f config.cache config.log config.status
 
 #========================================================================
-# Install binary object libraries.  On Windows this includes both .dll and
-# .lib files.  Because the .lib files are not explicitly listed anywhere,
-# we need to deduce their existence from the .dll file of the same name.
-# Library files go into the lib directory.
-# In addition, this will generate the pkgIndex.tcl
-# file in the install location (assuming it can find a usable tclsh shell)
-#
-# You should not have to modify this target.
+# Install binary object libraries.
 #========================================================================
-
 install-lib-binaries: binaries
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(pkglibdir)"
 	@list='$(lib_BINARIES)'; for p in $$list; do \
@@ -417,14 +305,8 @@ install-lib-binaries: binaries
 	fi
 
 #========================================================================
-# Install binary executables (e.g. .exe files and dependent .dll files)
-# This is for files that must go in the bin directory (located next to
-# wish and tclsh), like dependent .dll files on Windows.
-#
-# You should not have to modify this target, except to define bin_BINARIES
-# above if necessary.
+# Install binary executables
 #========================================================================
-
 install-bin-binaries: binaries
 	@$(INSTALL_DATA_DIR) "$(DESTDIR)$(bindir)"
 	@list='$(bin_BINARIES)'; for p in $$list; do \
@@ -438,6 +320,9 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
+#========================================================================
+# Uninstall recipes
+#========================================================================
 uninstall-binaries:
 	list='$(lib_BINARIES)'; for p in $$list; do \
 	  rm -f "$(DESTDIR)$(pkglibdir)/$$p"; \
@@ -453,9 +338,10 @@ uninstall-binaries:
 uninstall:
 	rm -rf "$(DESTDIR)$(pkglibdir)"
 
+#========================================================================
+# Flag PHONY recipes
+#========================================================================
 .PHONY: all binaries clean depend distclean doc install libraries test
 .PHONY: gdb gdb-test valgrind valgrindshell
 
-# Tell versions [3.59,3.63) of GNU make to not export all variables.
-# Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

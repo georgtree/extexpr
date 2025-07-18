@@ -262,20 +262,4 @@ test logbProcTest-3 {} -body {
     return [= {logb(0,3)}]
 } -result -Inf
 
-### Boolean functions tests
-# test booleanTest-1 {} -body {
-#     return [= {exactone(true,true,true,true,true,true)}]
-# } -result false
-
-# test booleanTest-2 {} -body {
-#     return [= {exactone(false,false,true,false,false,false)}]
-# } -result true
-
-# test booleanTest-3 {} -body {
-#     return [= {exactone(false,false,true,false,false,true)}]
-# } -result false
-
-# test booleanTest-4 {} -body {
-#     return [= {exactone(false,false,false,false,false,false)}]
-# } -result false
 cleanupTests
