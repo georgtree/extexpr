@@ -234,7 +234,6 @@ static int OperationProc(int operation, Tcl_Interp *interp, Tcl_Size objc, Tcl_O
                 Tcl_ListObjAppendElement(interp, resultList, Tcl_NewDoubleObj(resultValue));
             }
         }
-
     } else {
         if (Tcl_GetDoubleFromObj(interp, elements1[0], &elementValue1) != TCL_OK) {
             return TCL_ERROR;
