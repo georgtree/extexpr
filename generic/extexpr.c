@@ -34,9 +34,10 @@ extern DLLEXPORT int Extexpr_Init(Tcl_Interp *interp) {
     Tcl_CreateObjCommand2(interp, "::tcl::mathfunc::sub", (Tcl_ObjCmdProc2 *)SubCmdProc2, NULL, NULL);
     Tcl_CreateObjCommand2(interp, "::tcl::mathfunc::div", (Tcl_ObjCmdProc2 *)DivCmdProc2, NULL, NULL);
     Tcl_CreateObjCommand2(interp, "::tcl::mathfunc::pow", (Tcl_ObjCmdProc2 *)PowCmdProc2, NULL, NULL);
+    Tcl_CreateObjCommand2(interp, "::tcl::mathfunc::dot", (Tcl_ObjCmdProc2 *)DotCmdProc2, NULL, NULL);
     return TCL_OK;
 }
-enum Operations { SUM, SUB, MUL, DIV, POW };
+enum Operations { SUM, SUB, MUL, DIV, POW, DOT };
 enum Mode { SL, LS, LL, SS };
 
 static int MulCmdProc2(void *clientData, Tcl_Interp *interp, Tcl_Size objc, Tcl_Obj *const objv[]) {
@@ -65,6 +66,12 @@ static int DivCmdProc2(void *clientData, Tcl_Interp *interp, Tcl_Size objc, Tcl_
 }
 static int PowCmdProc2(void *clientData, Tcl_Interp *interp, Tcl_Size objc, Tcl_Obj *const objv[]) {
     if (OperationProc(POW, interp, objc, objv) != TCL_OK) {
+        return TCL_ERROR;
+    }
+    return TCL_OK;
+}
+static int DotCmdProc2(void *clientData, Tcl_Interp *interp, Tcl_Size objc, Tcl_Obj *const objv[]) {
+    if (OperationProc(DOT, interp, objc, objv) != TCL_OK) {
         return TCL_ERROR;
     }
     return TCL_OK;
@@ -119,6 +126,9 @@ static int OperationProc(int operation, Tcl_Interp *interp, Tcl_Size objc, Tcl_O
         Tcl_SetObjResult(interp, Tcl_NewStringObj("Empty list is not allowed as scalar input", -1));
         return TCL_ERROR;
     }
+    if (operation == DOT) {
+        resultValue = 0.0;
+    }
     if (mode == LL) {
         for (Tcl_Size i = 0; i < list1Length; ++i) {
             if (Tcl_GetDoubleFromObj(interp, elements1[i], &elementValue1) != TCL_OK) {
@@ -151,6 +161,9 @@ static int OperationProc(int operation, Tcl_Interp *interp, Tcl_Size objc, Tcl_O
                     return TCL_ERROR;
                 }
                 resultValue = pow(elementValue1, elementValue2);
+                break;
+            case DOT:
+                resultValue += elementValue1 * elementValue2;
                 break;
             };
             /* append elements to the result list */
@@ -191,6 +204,9 @@ static int OperationProc(int operation, Tcl_Interp *interp, Tcl_Size objc, Tcl_O
                     }
                     resultValue = pow(scalarValue, elementValue2);
                     break;
+                case DOT:
+                    Tcl_SetObjResult(interp, Tcl_NewStringObj("Dot product elements must be the same length", -1));
+                    return TCL_ERROR;
                 };
                 /* append elements to the result list */
                 Tcl_ListObjAppendElement(interp, resultList, Tcl_NewDoubleObj(resultValue));
@@ -229,6 +245,9 @@ static int OperationProc(int operation, Tcl_Interp *interp, Tcl_Size objc, Tcl_O
                     }
                     resultValue = pow(elementValue1, scalarValue);
                     break;
+                case DOT:
+                    Tcl_SetObjResult(interp, Tcl_NewStringObj("Dot product elements must be the same length", -1));
+                    return TCL_ERROR;
                 };
                 /* append elements to the result list */
                 Tcl_ListObjAppendElement(interp, resultList, Tcl_NewDoubleObj(resultValue));
@@ -264,6 +283,9 @@ static int OperationProc(int operation, Tcl_Interp *interp, Tcl_Size objc, Tcl_O
                 return TCL_ERROR;
             }
             resultValue = pow(elementValue1, elementValue2);
+            break;
+        case DOT:
+            resultValue = elementValue1 * elementValue2;
             break;
         };
         Tcl_SetObjResult(interp, Tcl_NewDoubleObj(resultValue));

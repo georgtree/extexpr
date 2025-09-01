@@ -22,11 +22,13 @@ Any OS that has tcl8.6/tcl9.0 (Linux, Windows, FreeBSD).
 .PP
 The first block of functions implements vector\-vector, vector\-scalar, scalar\-vector and scalar\-scalar operations.
 Vectors are represented by lists in Tcl, and scalars \- by single numbers.
-They are implemented with the same functions of two arguments: \fB\fCsum()\fR, \fB\fCsub()\fR, \fB\fCmul()\fR, \fB\fCdiv()\fR and \fB\fCpow()\fR\&.
+They are implemented with the same functions of two arguments: \fB\fCsum()\fR, \fB\fCsub()\fR, \fB\fCmul()\fR, \fB\fCdiv()\fR, \fB\fCpow()\fR and \fB\fCdot()\fR\&.
 The result depends on the size of operands, according to this table:
 .TS
 allbox;
 cb cb cb cb cb
+l l l l l
+l l l l l
 l l l l l
 l l l l l
 l l l l l
@@ -69,6 +71,8 @@ Function	1st argument	2nd argument	Result	Equation
 	vector	scalar	vector	\fB\fC[a0^b, a1^b, a2^b, ..., aN^b]\fR
 	scalar	vector	vector	\fB\fC[a^b0, a^b1, a^b2, ..., a^bN]\fR
 	vector	vector	vector	\fB\fC[a0^b0, a1^b1, a2^b2, ..., aN^bN]\fR
+\fB\fCdot()\fR	scalar	scalar	scalar	\fB\fCa*b\fR
+	vector	vector	vector	\fB\fCa0*b0+a1*b1+a2*b2+...+aN*bN\fR
 .TE
 .PP
 Consider the examples, first is sum of two vectors:

@@ -26,7 +26,7 @@ Any OS that has tcl8.6/tcl9.0 (Linux, Windows, FreeBSD).
 
 The first block of functions implements vector-vector, vector-scalar, scalar-vector and scalar-scalar operations.
 Vectors are represented by lists in Tcl, and scalars - by single numbers.
-They are implemented with the same functions of two arguments: `sum()`, `sub()`, `mul()`, `div()` and `pow()`.
+They are implemented with the same functions of two arguments: `sum()`, `sub()`, `mul()`, `div()`, `pow()` and `dot()`.
 The result depends on the size of operands, according to this table:
 
 | Function | 1st argument | 2nd argument | Result | Equation                            |
@@ -51,6 +51,8 @@ The result depends on the size of operands, according to this table:
 |          | vector       | scalar       | vector | `[a0^b, a1^b, a2^b, ..., aN^b]`     |
 |          | scalar       | vector       | vector | `[a^b0, a^b1, a^b2, ..., a^bN]`     |
 |          | vector       | vector       | vector | `[a0^b0, a1^b1, a2^b2, ..., aN^bN]` |
+| `dot()`  | scalar       | scalar       | scalar | `a*b`                               |
+|          | vector       | vector       | vector | `a0*b0+a1*b1+a2*b2+...+aN*bN`       |
 
 Consider the examples, first is sum of two vectors:
 
