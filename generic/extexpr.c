@@ -167,7 +167,13 @@ static int OperationProc(int operation, Tcl_Interp *interp, Tcl_Size objc, Tcl_O
                 break;
             };
             /* append elements to the result list */
-            Tcl_ListObjAppendElement(interp, resultList, Tcl_NewDoubleObj(resultValue));
+            if (operation != DOT) {
+                Tcl_ListObjAppendElement(interp, resultList, Tcl_NewDoubleObj(resultValue));
+            }
+        }
+        if (operation == DOT) {
+            Tcl_SetObjResult(interp, Tcl_NewDoubleObj(resultValue));
+            return TCL_OK;
         }
     } else if ((mode == SL) || (mode == LS)) {
         if (mode == SL) {

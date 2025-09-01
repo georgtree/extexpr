@@ -235,7 +235,7 @@ test dotProcTest-2 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
     return [= {dot($x,$y)}]
-} -result {0.0 1.0 17.0 98.0 354.0 979.0 2275.0 4676.0 8772.0 15333.0 25333.0} -cleanup {
+} -result {25333.0} -cleanup {
     unset x y
 }
 test dotProcTest-3 {} -setup {
