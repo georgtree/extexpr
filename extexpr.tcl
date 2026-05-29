@@ -39,5 +39,5 @@ proc tcl::mathfunc::logb {value base} {
     #  value - value to calculate the logarithm from
     #  base - logarithm base
     # Returns: value of logarithm
-    return [= {log($value)/double(log($base))}]
+    return [expr {log($value)/double(log($base))}]
 }

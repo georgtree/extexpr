@@ -18,7 +18,7 @@ from UCRT64 shell. After installing the package, you can move extexpr package fo
 
 ## Supported platforms
 
-Any OS that has tcl8.6/tcl9.0 (Linux, Windows, FreeBSD).
+Any OS that has tcl9.0 (Linux, Windows, FreeBSD).
 
 ## Description
 
@@ -56,7 +56,7 @@ The result depends on the size of operands, according to this table:
 
 Consider the examples, first is sum of two vectors:
 
-```tcl
+```tclcode
 package require extexpr
 interp alias {} = {} expr
 
@@ -64,25 +64,28 @@ set a {1 2 3 4 5 6}
 set b {9 8 7 6 5 4}
 set y [= {sum($a,$b)}]
 ```
-```text
+
+```tclout
 ==> 10.0 10.0 10.0 10.0 10.0 10.0
 ```
 
 Power of vector:
 
-```tcl
+```tclcode
 set y [= {pow($a,2)}]
 ```
-```text
+
+```tclout
 ==> 1.0 4.0 9.0 16.0 25.0 36.0
 ```
 
 Power of scalar:
 
-```tcl
+```tclcode
 set y [= {pow(2,$a)}]
 ```
-```text
+
+```tclout
 ==> 2.0 4.0 8.0 16.0 32.0 64.0
 ```
 
@@ -99,18 +102,20 @@ Package add aliases for `lindex`, `llength` and `lrange` and ability to use it i
 Also, commands `::tcl::mathfunc::max` and `::tcl::mathfunc::min` now have `::tcl::mathfunc::maxl` and 
 `::tcl::mathfunc::minl` versions that accepts lists instead of many arguments:
 
-```tcl
+```tclcode
 set numbers {86 982 81 64 1 0.1}
 set max [= {maxl($numbers)}]
 ```
-```text
+
+```tclout
 ==> 982
 ```
 
-```tcl
+```tclcode
 set min [= {minl($numbers)}]
 ```
-```text
+
+```tclout
 ==> 0.1
 ```
 

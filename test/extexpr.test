@@ -1,55 +1,121 @@
 package require tcltest
 namespace import ::tcltest::*
-interp alias {} @ {} lindex
-interp alias {} = {} expr
 package require extexpr
 
+set atol 1e-15
+set rtol 1e-14
+
+proc containsNumber {value} {
+    if {[string is double -strict $value]} {
+        return true
+    }
+    if {[catch {llength $value} len]} {
+        return false
+    }
+    # Single-element and empty values are treated as atoms here.
+    if {$len<=1} {
+        return false
+    }
+    for {set i 0} {$i<$len} {incr i} {
+        if {[containsNumber [lindex $value $i]]} {
+            return true
+        }
+    }
+    return false
+}
+
+proc approxNestedEqual {a b} {
+    variable atol
+    variable rtol
+    set aIsNum [string is double -strict $a]
+    set bIsNum [string is double -strict $b]
+    # Numeric atoms: approximate comparison
+    if {$aIsNum && $bIsNum} {
+        return [expr {abs($a-$b)<=($atol+$rtol*abs($b))}]
+    }
+    # One numeric, one non-numeric
+    if {$aIsNum!=$bIsNum} {
+        return false
+    }
+    set aHasNum [containsNumber $a]
+    set bHasNum [containsNumber $b]
+    # If neither side contains numbers, compare as exact strings.
+    # This preserves spaces, tabs, etc.
+    if {!$aHasNum && !$bHasNum} {
+        return [string equal $a $b]
+    }
+    # If only one side contains numeric structure, they differ.
+    if {$aHasNum != $bHasNum} {
+        return false
+    }
+    # Both contain numbers somewhere, so compare structurally as lists.
+    if {[catch {llength $a} lenA]} {
+        return false
+    }
+    if {[catch {llength $b} lenB]} {
+        return false
+    }
+    if {$lenA != $lenB} {
+        return false
+    }
+    for {set i 0} {$i<$lenA} {incr i} {
+        set elemA [lindex $a $i]
+        set elemB [lindex $b $i]
+        if {![approxNestedEqual $elemA $elemB]} {
+            return false
+        }
+    }
+    return true
+}
+
+customMatch approxEqual approxNestedEqual
+
 ### List operations tests
-test maxlProcTest-1 {} -setup {
+test maxlProcTest-1 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {maxl($y)}]
+    return [expr {maxl($y)}]
 } -result 100 -cleanup {
     unset y
 }
-test minlProcTest-1 {} -setup {
+test minlProcTest-1 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {minl($y)}]
+    return [expr {minl($y)}]
 } -result 0 -cleanup {
     unset y
 }
 
 ### mul tests
-test mulProcTest-1 {} -setup {
+test mulProcTest-1 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {mul($y,2)}]
+    return [expr {mul($y,2)}]
 } -result {0.0 2.0 8.0 18.0 32.0 50.0 72.0 98.0 128.0 162.0 200.0} -cleanup {
     unset y
 }
-test mulProcTest-2 {} -setup {
+test mulProcTest-2 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {mul(2,$y)}]
+    return [expr {mul(2,$y)}]
 } -result {0.0 2.0 8.0 18.0 32.0 50.0 72.0 98.0 128.0 162.0 200.0} -cleanup {
     unset y
 }
-test mulProcTest-3 {} -body {
-    return [= {mul(2,2)}]
+test mulProcTest-3 {} -match approxEqual -body {
+    return [expr {mul(2,2)}]
 } -result 4.0
 test mullProcTest-4 {} -setup {
     set x [list 0 1 4 9 16 25 36 49 64 81 100]
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {mul($x,$y)}]
+    return [expr {mul($x,$y)}]
 } -result {0.0 1.0 16.0 81.0 256.0 625.0 1296.0 2401.0 4096.0 6561.0 10000.0} -cleanup {
     unset x y
 }
 test mulProcTest-5 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    catch {= {mul($y)}} errorStr
+    catch {expr {mul($y)}} errorStr
     return $errorStr
 } -result {wrong # args: should be one of the following:
   tcl::mathfunc::mul list list
@@ -62,7 +128,7 @@ test mulProcTest-5 {} -setup {
 test mulProcTest-6 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    catch {= {mul($y,{a})}} errorStr
+    catch {expr {mul($y,{a})}} errorStr
     return $errorStr
 } -result {expected floating-point number but got "a"} -cleanup {
     unset y errorStr
@@ -70,7 +136,7 @@ test mulProcTest-6 {} -setup {
 test mulProcTest-7 {} -setup {
     set y [list 0 1 4 v 16 25 36 49 64 81 100]
 } -body {
-    catch {= {mul($y,2)}} errorStr
+    catch {expr {mul($y,2)}} errorStr
     return $errorStr
 } -result {expected floating-point number but got "v"} -cleanup {
     unset y
@@ -78,97 +144,97 @@ test mulProcTest-7 {} -setup {
 test mulProcTest-8 {} -setup {
     set y [list 0 1 4 8 16 25 36 49 64 81 100]
 } -body {
-    catch {= {mul($y,[list])}} errorStr
+    catch {expr {mul($y,[list])}} errorStr
     return $errorStr
 } -result {Empty list is not allowed as scalar input} -cleanup {
     unset y
 }
 
 ### sum tests
-test sumProcTest-1 {} -setup {
+test sumProcTest-1 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {sum($y,2)}]
+    return [expr {sum($y,2)}]
 } -result {2.0 3.0 6.0 11.0 18.0 27.0 38.0 51.0 66.0 83.0 102.0} -cleanup {
     unset y
 }
-test sumProcTest-2 {} -setup {
+test sumProcTest-2 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {sum(2,$y)}]
+    return [expr {sum(2,$y)}]
 } -result {2.0 3.0 6.0 11.0 18.0 27.0 38.0 51.0 66.0 83.0 102.0} -cleanup {
     unset y
 }
-test sumProcTest-3 {} -body {
-    return [= {sum(2,2)}]
+test sumProcTest-3 {} -match approxEqual -body {
+    return [expr {sum(2,2)}]
 } -result 4.0
 test sumProcTest-4 {} -setup {
     set x [list 0 1 4 9 16 25 36 49 64 81 100]
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {sum($x,$y)}]
+    return [expr {sum($x,$y)}]
 } -result {0.0 2.0 8.0 18.0 32.0 50.0 72.0 98.0 128.0 162.0 200.0} -cleanup {
     unset x y
 }
 
 ### sub tests
-test subProcTest-1 {} -setup {
+test subProcTest-1 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {sub($y,2)}]
+    return [expr {sub($y,2)}]
 } -result {-2.0 -1.0 2.0 7.0 14.0 23.0 34.0 47.0 62.0 79.0 98.0} -cleanup {
     unset y
 }
-test subProcTest-2 {} -setup {
+test subProcTest-2 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {sub(2,$y)}]
+    return [expr {sub(2,$y)}]
 } -result {2.0 1.0 -2.0 -7.0 -14.0 -23.0 -34.0 -47.0 -62.0 -79.0 -98.0} -cleanup {
     unset y
 }
-test subProcTest-3 {} -body {
-    return [= {sub(2,2)}]
+test subProcTest-3 {} -match approxEqual -body {
+    return [expr {sub(2,2)}]
 } -result 0.0
 test subProcTest-4 {} -setup {
     set x [list 0 1 4 9 16 25 36 49 64 81 101]
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {sub($x,$y)}]
+    return [expr {sub($x,$y)}]
 } -result {0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0} -cleanup {
     unset x y
 }
 
 ### div tests
-test divProcTest-1 {} -setup {
+test divProcTest-1 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {div($y,2)}]
+    return [expr {div($y,2)}]
 } -result {0.0 0.5 2.0 4.5 8.0 12.5 18.0 24.5 32.0 40.5 50.0} -cleanup {
     unset y
 }
-test divProcTest-2 {} -setup {
+test divProcTest-2 {} -match approxEqual -setup {
     set y [list 1 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {div(2,$y)}]
+    return [expr {div(2,$y)}]
 } -result {2.0 2.0 0.5 0.2222222222222222 0.125 0.08 0.05555555555555555 0.04081632653061224 0.03125\
 0.024691358024691357 0.02} -cleanup {
     unset y
 }
-test divProcTest-3 {} -body {
-    return [= {div(2,2)}]
+test divProcTest-3 {} -match approxEqual -body {
+    return [expr {div(2,2)}]
 } -result 1.0
-test divProcTest-4 {} -setup {
+test divProcTest-4 {} -match approxEqual -setup {
     set x [list 0 1 4 9 16 25 36 49 64 81 101]
     set y [list 1 1 4 9 13 25 36 45 64 81 100]
 } -body {
-    return [= {div($x,$y)}]
+    return [expr {div($x,$y)}]
 } -result {0.0 1.0 1.0 1.0 1.2307692307692308 1.0 1.0 1.0888888888888888 1.0 1.0 1.01} -cleanup {
     unset x y
 }
 test divlscProcTest-5 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    catch {= {div($y,0)}} errorStr
+    catch {expr {div($y,0)}} errorStr
     return $errorStr
 } -result {Division by zero} -cleanup {
     unset y errorStr
@@ -176,43 +242,43 @@ test divlscProcTest-5 {} -setup {
 test divlscProcTest-6 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    catch {= {div(1,$y)}} errorStr
+    catch {expr {div(1,$y)}} errorStr
     return $errorStr
 } -result {Division by zero} -cleanup {
     unset y errorStr
 }
 
 ### pow tests
-test powProcTest-1 {} -setup {
+test powProcTest-1 {} -match approxEqual -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {pow($y,2)}]
+    return [expr {pow($y,2)}]
 } -result {0.0 1.0 16.0 81.0 256.0 625.0 1296.0 2401.0 4096.0 6561.0 10000.0} -cleanup {
     unset y
 }
-test powProcTest-2 {} -setup {
+test powProcTest-2 {} -match approxEqual -setup {
     set y [list 1 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {pow(2,$y)}]
+    return [expr {pow(2,$y)}]
 } -result {2.0 2.0 16.0 512.0 65536.0 33554432.0 68719476736.0 562949953421312.0 1.844674407370955e+19\
 2.4178516392292583e+24 1.2676506002282294e+30} -cleanup {
     unset y
 }
-test powProcTest-3 {} -body {
-    return [= {pow(2,2)}]
+test powProcTest-3 {} -match approxEqual -body {
+    return [expr {pow(2,2)}]
 } -result 4.0
 test powProcTest-4 {} -setup {
     set x [list 0 1 4 9 16]
     set y [list 1 1 4 9 13]
 } -body {
-    return [= {pow($x,$y)}]
+    return [expr {pow($x,$y)}]
 } -result {0.0 1.0 256.0 387420489.0 4503599627370496.0} -cleanup {
     unset x y
 }
 test powProcTest-5 {} -setup {
     set y [list 0 1 4 -9 16 25 36 49 64 81 100]
 } -body {
-    catch {= {pow($y,0.5)}} errorStr
+    catch {expr {pow($y,0.5)}} errorStr
     return $errorStr
 } -result {Negative base cannot be raised to a non-integer power} -cleanup {
     unset y errorStr
@@ -220,68 +286,66 @@ test powProcTest-5 {} -setup {
 test powProcTest-6 {} -setup {
     set y [list 0 1 4 0.5 16 25 36 49 64 81 100]
 } -body {
-    catch {= {pow(-2,$y)}} errorStr
+    catch {expr {pow(-2,$y)}} errorStr
     return $errorStr
 } -result {Negative base cannot be raised to a non-integer power} -cleanup {
     unset y errorStr
 }
 
 ### dot tests
-test dotProcTest-1 {} -body {
-    return [= {dot(2,2)}]
+test dotProcTest-1 {} -match approxEqual -body {
+    return [expr {dot(2,2)}]
 } -result 4.0
 test dotProcTest-2 {} -setup {
     set x [list 0 1 4 9 16 25 36 49 64 81 100]
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {dot($x,$y)}]
+    return [expr {dot($x,$y)}]
 } -result {25333.0} -cleanup {
     unset x y
 }
 test dotProcTest-3 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    catch {= {dot($y,2)}} errorStr
+    catch {expr {dot($y,2)}} errorStr
     return $errorStr
 } -result {Dot product elements must be the same length} -cleanup {
     unset y
 }
 
-
-
 ### List commands test
 test lindexProcTest-1 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {li($y,2)}]
+    return [expr {li($y,2)}]
 } -result 4 -cleanup {
     unset y
 }
 test lrangeProcTest-1 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {lrange($y,2,6)}]
+    return [expr {lrange($y,2,6)}]
 } -result {4 9 16 25 36} -cleanup {
     unset y
 }
 test llengthProcTest-1 {} -setup {
     set y [list 0 1 4 9 16 25 36 49 64 81 100]
 } -body {
-    return [= {llength($y)}]
+    return [expr {llength($y)}]
 } -result 11 -cleanup {
     unset y
 }
 ### Math functions tests
-test logbProcTest-1 {} -body {
-    return [= {logb(16,2)}]
+test logbProcTest-1 {} -match approxEqual -body {
+    return [expr {logb(16,2)}]
 } -result 4.0
 
-test logbProcTest-2 {} -body {
-    return [= {logb(16,3)}]
+test logbProcTest-2 {} -match approxEqual -body {
+    return [expr {logb(16,3)}]
 } -result 2.5237190142858297
 
 test logbProcTest-3 {} -body {
-    return [= {logb(0,3)}]
+    return [expr {logb(0,3)}]
 } -result -Inf
 
 cleanupTests

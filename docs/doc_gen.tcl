@@ -12,4 +12,4 @@ fileutil::updateInPlace [file join $currentDir .. README.md] processMd
 
 # nroff generating
 set file [file join $currentDir .. README.md]
-exec md2man-roff [file join $currentDir .. README.md] > [file join $currentDir extexpr.n]
+#exec md2man-roff [file join $currentDir .. README.md] > [file join $currentDir extexpr.n]
