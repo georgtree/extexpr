@@ -56,7 +56,7 @@ The result depends on the size of operands, according to this table:
 
 Consider the examples, first is sum of two vectors:
 
-```tclcode
+```tcl
 package require extexpr
 interp alias {} = {} expr
 
@@ -65,27 +65,27 @@ set b {9 8 7 6 5 4}
 set y [= {sum($a,$b)}]
 ```
 
-```tclout
+```text
 ==> 10.0 10.0 10.0 10.0 10.0 10.0
 ```
 
 Power of vector:
 
-```tclcode
+```tcl
 set y [= {pow($a,2)}]
 ```
 
-```tclout
+```text
 ==> 1.0 4.0 9.0 16.0 25.0 36.0
 ```
 
 Power of scalar:
 
-```tclcode
+```tcl
 set y [= {pow(2,$a)}]
 ```
 
-```tclout
+```text
 ==> 2.0 4.0 8.0 16.0 32.0 64.0
 ```
 
@@ -102,20 +102,20 @@ Package add aliases for `lindex`, `llength` and `lrange` and ability to use it i
 Also, commands `::tcl::mathfunc::max` and `::tcl::mathfunc::min` now have `::tcl::mathfunc::maxl` and 
 `::tcl::mathfunc::minl` versions that accepts lists instead of many arguments:
 
-```tclcode
+```tcl
 set numbers {86 982 81 64 1 0.1}
 set max [= {maxl($numbers)}]
 ```
 
-```tclout
+```text
 ==> 982
 ```
 
-```tclcode
+```tcl
 set min [= {minl($numbers)}]
 ```
 
-```tclout
+```text
 ==> 0.1
 ```
 
