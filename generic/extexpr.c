@@ -112,10 +112,10 @@ static int OperationProc(int operation, Tcl_Interp *interp, Tcl_Size objc, Tcl_O
         mode = SS;
     } else if ((list1Length > 1) && (list2Length > 1)) {
         if (list1Length != list2Length) {
-            int len =
-                snprintf(NULL, 0, "Lengths of the input lists '%ld' and '%ld' are not equal", list1Length, list2Length);
+            int len = snprintf(NULL, 0, "Lengths of the input lists '%lld' and '%lld' are not equal", list1Length,
+                               list2Length);
             char *buffer = (char *)Tcl_Alloc(len + 1);
-            snprintf(buffer, len + 1, "Lengths of the input lists '%ld' and '%ld' are not equal", list1Length,
+            snprintf(buffer, len + 1, "Lengths of the input lists '%lld' and '%lld' are not equal", list1Length,
                      list2Length);
             Tcl_SetObjResult(interp, Tcl_NewStringObj(buffer, -1));
             Tcl_Free(buffer);

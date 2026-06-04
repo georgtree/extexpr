@@ -18,7 +18,7 @@ from UCRT64 shell. After installing the package, you can move extexpr package fo
 
 ## Supported platforms
 
-Any OS that has tcl9.0 (Linux, Windows, FreeBSD).
+Any OS that has tcl8.6/tcl9.0 (Linux, Windows, FreeBSD).
 
 ## Description
 
